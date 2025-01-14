@@ -1,79 +1,164 @@
-# vlg-kaggle-pixelplay-25
-This is the repository for the kaggle challenge for IIT-R freshers (pixel-play'25)
-Project Overview
-This repository contains a comprehensive implementation of an image classification pipeline using ConvNeXt-Tiny, a state-of-the-art deep learning model. The model is fine-tuned for classifying images into predefined categories. The repository includes preprocessing steps, training scripts, validation mechanisms, and inference capabilities for generating predictions on unseen data.
-Key Features
-Dataset Handling:
-Custom handling of imbalanced datasets using weighted random sampling.
-Automatic augmentation to increase the number of samples per class.
-Support for structured folder datasets with subfolders representing classes.
-Model:
-Fine-tuning of ConvNeXt-Tiny, a modern convolutional neural network architecture optimized for image classification.
-Addition of a custom classification head with Batch Normalization and Dropout for better generalization.
-Label smoothing for robustness against noisy labels.
-Optimization:
-Training with AdamW optimizer and cosine annealing learning rate scheduler.
-Early stopping to prevent overfitting based on validation loss.
-Inference:
-Generates predictions on test datasets and exports results in a CSV format.
-Model Architecture
-Stem (Patchify Stem):
+Overview
+This repository contains the implementation and insights for the VLG Recruitment Challenge 2024, which involved classifying animals into 40 distinct categories. The dataset posed challenges such as class imbalance, noise, and distribution shifts between the training and test datasets. The solution employed advanced deep learning techniques and ConvNeXt-Tiny, a state-of-the-art architecture, to tackle these issues.
 
-Initial 4x4 convolution layer with a stride of 4 to reduce spatial resolution.
-Produces feature maps of size 56x56.
-Stages:
+Steps of Implementation
+1. Dataset Preparation
+Dataset Structure:
+Training set: 40 subfolders (one per class) with varying numbers of images.
+Test set: 3,000 unlabeled images.
+Challenges:
+Class imbalance: Classes had between 150–250 images.
+Noise: Redundant or mislabeled samples.
+Solutions:
+Weighted random sampling for class balancing.
+Synthetic data augmentation to equalize class representation.
+2. Preprocessing
+Images were resized to 224×224 to match the ConvNeXt input size.
+Normalized using ImageNet statistics:
+mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225].
+Applied augmentations:
+Random horizontal flips.
+Random rotations (up to 30 degrees).
+3. Model Selection
+ConvNeXt-Tiny was chosen for its balance of accuracy and efficiency.
+Key architectural features:
+Large kernels (7x7) for broader spatial context.
+Depthwise convolutions for efficient feature extraction.
+Layer normalization replacing batch normalization.
+4. Custom Model Head
+The default classification head was replaced with a custom head:
 
-Stage 1:
-Input resolution: 56x56.
-Number of ConvNeXt Blocks: 3.
-Feature dimension: 96.
-Stage 2:
-Input resolution: 28x28.
-Number of ConvNeXt Blocks: 3.
-Feature dimension: 192.
-Stage 3:
-Input resolution: 14x14.
-Number of ConvNeXt Blocks: 9.
-Feature dimension: 384.
-Stage 4:
-Input resolution: 7x7.
-Number of ConvNeXt Blocks: 3.
-Feature dimension: 768.
-Classification Head:
-
-A global average pooling layer to reduce spatial dimensions to a single vector.
-Custom fully connected layers:
-Linear (768 → 512) with Batch Normalization, Dropout (0.6), and ReLU.
-Linear (512 → number of classes) with Dropout (0.6).
-Important Notes
-Dataset Handling:
-The training dataset should be structured as:
+python
 Copy code
-train/
-├── class_1/
-├── class_2/
-├── ...
-└── class_n/
-Synthetic Augmentations:
-Data augmentations applied include Random Resized Crop, Horizontal Flip, and Random Rotation.
-Weighted random sampling is used to address class imbalance.
-Performance Monitoring:
-Early stopping is implemented with a patience of 3 epochs to minimize overfitting.
-Training and validation accuracy/loss metrics are logged for each epoch.
-Future Directions
-Advanced Augmentations:
-Incorporate CutMix and MixUp augmentations for synthetic data generation.
-K-Fold Cross-Validation:
-Use k-fold CV for better model robustness and validation.
-Model Ensemble:
-Combine predictions from multiple models to improve generalization.
-Explainability:
-Use Grad-CAM to visualize feature importance in decision-making.
-Results
-Test Accuracy: 59.1%
+nn.Sequential(
+    nn.Dropout(0.6),
+    nn.Linear(in_features, 512),
+    nn.BatchNorm1d(512),
+    nn.ReLU(),
+    nn.Dropout(0.6),
+    nn.Linear(512, num_classes)
+)
+5. Training
+Loss Function: Cross-entropy with label smoothing (factor=0.2) to soften target probabilities.
+Optimizer: AdamW with weight decay (1e-3).
+Scheduler: Cosine annealing for smooth learning rate adjustments.
+Early Stopping: Halted training after 3 consecutive epochs without validation loss improvement.
+6. Validation
+15% of training data was used as a validation set.
+Validation accuracy peaked at 96%, indicating good fit on the training data.
+7. Inference
+Predictions on the test set were saved to a CSV file.
+Grad-CAM was used for model explainability, highlighting the focus on species-specific features.
+Performance
+Training Accuracy: 97.8%
+Validation Accuracy: 96%
+Test Accuracy: ~59% on both public and private leaderboards.
 Observations:
-The model generalizes well to common patterns but struggles with rare classes.
-Increasing dataset diversity and synthetic augmentations could further improve performance.
-Contact
-For questions or collaboration, contact Abhiraj Bharangar at abhiraj_b@me.iitr.ac.in.
+A significant drop in test accuracy suggests potential dataset shift. Several test set classes were not present in the training set.
+Challenges
+Overfitting:
+
+Despite regularization (dropout, weight decay), the model overfitted to the training data.
+Key insight: Some test set classes were missing in the training data, limiting generalization.
+Dataset Noise:
+
+Redundancies and mislabeled samples affected model robustness.
+Hardware Constraints:
+
+Training was constrained by memory, requiring smaller batch sizes (32).
+Future Directions
+Zero-Shot Learning:
+
+Use CLIP (OpenAI) for handling unseen test classes.
+Expected improvement: ~20% test accuracy boost.
+Data Augmentation:
+
+Advanced synthetic augmentation (e.g., CutMix, GAN-based techniques).
+Ensemble Learning:
+
+Combine predictions from multiple architectures.
+Hyperparameter Tuning:
+
+Use Optuna for fine-tuning learning rates, dropout, and weight decay.
+Here is a brief step by step summary for implementation of code->
+1. Dataset Preparation
+Define Paths: Paths for training and test datasets are set.
+Transformations:
+Base Transformations:
+Resize images to 224×224.
+Apply augmentations like random horizontal flips and rotations.
+Normalize images with ImageNet mean and standard deviation.
+Custom Dataset Class:
+A custom ImageFolder is implemented to:
+Balance classes by augmenting underrepresented classes.
+Handle transformations during data loading.
+2. Data Loading
+Class Balancing:
+
+Classes are balanced using:
+Synthetic duplication for underrepresented classes.
+Weighted random sampling based on class frequencies.
+Validation Split:
+
+15% of the balanced training dataset is split into a validation set.
+DataLoaders:
+
+DataLoaders are created for training and validation sets:
+Batch size: 32.
+Weighted sampling for the training set.
+3. Model Definition
+Base Model:
+A pretrained ConvNeXt-Small model is loaded.
+Custom Classification Head:
+The default classification head is replaced with:
+Dropout layers for regularization.
+Fully connected layers with batch normalization and ReLU activation.
+Final layer outputs predictions for 40 classes.
+4. Training Setup
+Device Selection:
+Use GPU if available; otherwise, fallback to CPU.
+Loss Function:
+Cross-Entropy Loss with label smoothing (factor=0.2) to handle noisy labels.
+Optimizer:
+AdamW optimizer with weight decay (1e-3).
+Scheduler:
+Cosine annealing learning rate scheduler to adjust the learning rate smoothly.
+Mixed Precision Training:
+AMP (Automatic Mixed Precision) is used for faster computation.
+5. Training Loop
+Initialize Metrics:
+Track training loss, accuracy, and validation performance.
+Train Phase:
+Iterate over training batches:
+Forward pass with AMP.
+Compute loss.
+Backpropagation and weight updates using the scaled gradient.
+Validation Phase:
+Evaluate the model on the validation set:
+Compute validation loss and accuracy.
+Save the best model based on validation loss.
+Early Stopping:
+Stop training if validation loss does not improve for 3 consecutive epochs.
+6. Test Predictions
+Inference Mode:
+Set the model to evaluation mode to disable gradient computation.
+Prediction Loop:
+For each test image:
+Apply transformations and pass through the model.
+Extract the predicted class.
+Save Predictions:
+Store results in a CSV file with columns Id and Category.
+Summary of Key Steps
+Data Preparation: Load, augment, and balance the dataset.
+Model Definition: Use ConvNeXt-Small with a custom classification head.
+Training:
+Loss: Cross-entropy with label smoothing.
+Optimizer: AdamW.
+Scheduler: Cosine annealing.
+Validation: Monitor validation performance for early stopping.
+Inference: Predict classes for the test set and save to a CSV file.
+
+
+
+
 
