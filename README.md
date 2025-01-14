@@ -26,27 +26,19 @@ Large kernels (7x7) for broader spatial context.
 Depthwise convolutions for efficient feature extraction.
 Layer normalization replacing batch normalization.
 4. Custom Model Head
-The default classification head was replaced with a custom head:
+The default classification head was replaced with a custom head
 
-python
-Copy code
-nn.Sequential(
-    nn.Dropout(0.6),
-    nn.Linear(in_features, 512),
-    nn.BatchNorm1d(512),
-    nn.ReLU(),
-    nn.Dropout(0.6),
-    nn.Linear(512, num_classes)
-)
 5. Training
 Loss Function: Cross-entropy with label smoothing (factor=0.2) to soften target probabilities.
 Optimizer: AdamW with weight decay (1e-3).
 Scheduler: Cosine annealing for smooth learning rate adjustments.
 Early Stopping: Halted training after 3 consecutive epochs without validation loss improvement.
-6. Validation
+
+7. Validation
 15% of training data was used as a validation set.
 Validation accuracy peaked at 96%, indicating good fit on the training data.
-7. Inference
+
+9. Inference
 Predictions on the test set were saved to a CSV file.
 Grad-CAM was used for model explainability, highlighting the focus on species-specific features.
 Performance
@@ -81,6 +73,7 @@ Hyperparameter Tuning:
 
 Use Optuna for fine-tuning learning rates, dropout, and weight decay.
 Here is a brief step by step summary for implementation of code->
+
 1. Dataset Preparation
 Define Paths: Paths for training and test datasets are set.
 Transformations:
@@ -92,6 +85,8 @@ Custom Dataset Class:
 A custom ImageFolder is implemented to:
 Balance classes by augmenting underrepresented classes.
 Handle transformations during data loading.
+
+
 2. Data Loading
 Class Balancing:
 
@@ -106,6 +101,7 @@ DataLoaders:
 DataLoaders are created for training and validation sets:
 Batch size: 32.
 Weighted sampling for the training set.
+
 3. Model Definition
 Base Model:
 A pretrained ConvNeXt-Small model is loaded.
@@ -114,6 +110,7 @@ The default classification head is replaced with:
 Dropout layers for regularization.
 Fully connected layers with batch normalization and ReLU activation.
 Final layer outputs predictions for 40 classes.
+
 4. Training Setup
 Device Selection:
 Use GPU if available; otherwise, fallback to CPU.
@@ -125,6 +122,8 @@ Scheduler:
 Cosine annealing learning rate scheduler to adjust the learning rate smoothly.
 Mixed Precision Training:
 AMP (Automatic Mixed Precision) is used for faster computation.
+
+
 5. Training Loop
 Initialize Metrics:
 Track training loss, accuracy, and validation performance.
@@ -139,23 +138,37 @@ Compute validation loss and accuracy.
 Save the best model based on validation loss.
 Early Stopping:
 Stop training if validation loss does not improve for 3 consecutive epochs.
+
+
 6. Test Predictions
 Inference Mode:
+
 Set the model to evaluation mode to disable gradient computation.
 Prediction Loop:
 For each test image:
+
 Apply transformations and pass through the model.
+
 Extract the predicted class.
+
 Save Predictions:
+
 Store results in a CSV file with columns Id and Category.
 Summary of Key Steps
+
 Data Preparation: Load, augment, and balance the dataset.
+
 Model Definition: Use ConvNeXt-Small with a custom classification head.
+
 Training:
 Loss: Cross-entropy with label smoothing.
+
 Optimizer: AdamW.
+
 Scheduler: Cosine annealing.
+
 Validation: Monitor validation performance for early stopping.
+
 Inference: Predict classes for the test set and save to a CSV file.
 
 
