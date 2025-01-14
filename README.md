@@ -172,6 +172,9 @@ Validation: Monitor validation performance for early stopping.
 Inference: Predict classes for the test set and save to a CSV file.
 
 
+for contacting me mail me at ayushbharangar@gmail.com
+
+
 
 
 
